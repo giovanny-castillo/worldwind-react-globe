@@ -1,25 +1,25 @@
-/* 
+/*
  * Copyright (c) 2018 Bruce Schubert.
  * The MIT License
  * http://www.opensource.org/licenses/mit-license
  */
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
-import 'worldwindjs'; // WorldWind
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import "worldwindjs"; // WorldWind
 import { observable } from "mobx";
- 
-import WorldWindFixes from '../api/WorldWindFixes';
-import EoxOpenStreetMapLayer from '../api/EoxOpenStreetMapLayer';
-import EoxSentinal2CloudlessLayer from '../api/EoxSentinal2CloudlessLayer';
-import EoxSentinal2WithLabelsLayer from '../api/EoxSentinal2WithLabelsLayer';
-import EnhancedAtmosphereLayer from '../api/EnhancedAtmosphereLayer';
-import UsgsTopoBaseMapLayer from '../api/UsgsTopoBaseMapLayer';
-import UsgsImageryTopoBaseMapLayer from '../api/UsgsImageryTopoBaseMapLayer';
-import styles from './Globe.css';
+
+import WorldWindFixes from "../api/WorldWindFixes";
+import EoxOpenStreetMapLayer from "../api/EoxOpenStreetMapLayer";
+import EoxSentinal2CloudlessLayer from "../api/EoxSentinal2CloudlessLayer";
+import EoxSentinal2WithLabelsLayer from "../api/EoxSentinal2WithLabelsLayer";
+import EnhancedAtmosphereLayer from "../api/EnhancedAtmosphereLayer";
+import UsgsTopoBaseMapLayer from "../api/UsgsTopoBaseMapLayer";
+import UsgsImageryTopoBaseMapLayer from "../api/UsgsImageryTopoBaseMapLayer";
+import styles from "./Globe.css";
 
 /* global WorldWind */
 
-const DEFAULT_BACKGROUND_COLOR = 'rgb(36,74,101)';
+const DEFAULT_BACKGROUND_COLOR = "rgb(36,74,101)";
 
 /**
  * Globe React component.
@@ -29,7 +29,7 @@ export default class Globe extends Component {
     super(props);
     this.state = {
       isValid: false,
-      isDropArmed: false
+      isDropArmed: false,
     };
 
     // Apply post-release fixes to the WorldWind library before creating a WorldWindow
@@ -38,12 +38,12 @@ export default class Globe extends Component {
     // Skip if the base URL was already set by the application
     if (!Globe.isBaseUrlSet) {
       // Define the default path to the images folder used by WorldWind.
-      Globe.setBaseUrl('https://files.worldwind.arc.nasa.gov/artifactory/web/0.9.0/');
+      Globe.setBaseUrl("./images");
     }
 
     // The WorldWindow
     this.wwd = null;
-    this.canvasId = this.props.canvasId || 'canvas_' + Date.now();
+    this.canvasId = this.props.canvasId || "canvas_" + Date.now();
 
     // Layer managment support
     this.nextLayerId = 1;
@@ -55,11 +55,10 @@ export default class Globe extends Component {
 
     // Click/Drop support
     this.dropCallback = null;
-
   }
 
   static propTypes = {
-    /** 
+    /**
      * An array of layer type strings, WorldWind.Layer objects, and/or layer
      * configuration objects, e.g., {layer: String|WorldWind.Layer, options: Object}
      */
@@ -76,63 +75,66 @@ export default class Globe extends Component {
      * Altitude in meters above sea level (MSL)
      */
     altitude: PropTypes.number,
-    /** 
-     * A projection identifier string 
+    /**
+     * A projection identifier string
      */
     projection: PropTypes.string,
     /**
      * Background color CSS string
      */
     backgroundColor: PropTypes.string,
-    /** 
-     * The id of an existing canvas to attach the Globe 
+    /**
+     * The id of an existing canvas to attach the Globe
      */
     canvasId: PropTypes.string,
-    /** 
-     * A callback function to push state up to the parent 
+    /**
+     * A callback function to push state up to the parent
      */
-    onUpdate: PropTypes.func
-  }
+    onUpdate: PropTypes.func,
+  };
 
   static get categories() {
     if (!Globe._categories) {
       Globe._categories = new Map();
-      Globe._categories.set('background', 'Background');
-      Globe._categories.set('base', 'Base Layers');
-      Globe._categories.set('overlay', 'Overlays');
-      Globe._categories.set('data', 'Data');
-      Globe._categories.set('setting', 'Settings');
-      Globe._categories.set('debug', 'Debugging');
+      Globe._categories.set("background", "Background");
+      Globe._categories.set("base", "Base Layers");
+      Globe._categories.set("overlay", "Overlays");
+      Globe._categories.set("data", "Data");
+      Globe._categories.set("setting", "Settings");
+      Globe._categories.set("debug", "Debugging");
     }
     return Globe._categories;
   }
 
   /**
-   * Predefined layer types used by addLayer(). An application is free to change 
-   * the values but not the keys. The values are used for the default 
+   * Predefined layer types used by addLayer(). An application is free to change
+   * the values but not the keys. The values are used for the default
    * layer display names.
    */
   static get layerTypes() {
     if (!Globe._layerTypes) {
       Globe._layerTypes = new Map();
-      Globe._layerTypes.set('blue-marble', 'Blue Marble');
-      Globe._layerTypes.set('blue-marble-lowres', 'Background');
-      Globe._layerTypes.set('blue-marble-landsat', 'Blue Marble and LandSat');
-      Globe._layerTypes.set('bing-aerial', 'Bing Aerial');
-      Globe._layerTypes.set('bing-aerial-labels', 'Bing Aerial with Labels');
-      Globe._layerTypes.set('bing-roads', 'Bing Roads');
-      Globe._layerTypes.set('eox-sentinal2', 'EOX Sentinal-2');
-      Globe._layerTypes.set('eox-sentinal2-labels', 'EOX Sentinal-2 with Labels');
-      Globe._layerTypes.set('eox-openstreetmap', 'EOX OpenStreetMap');
-      Globe._layerTypes.set('usgs-topo', 'USGS Topographic');
-      Globe._layerTypes.set('usgs-imagery-topo', 'USGS Imagery Topographic');
-      Globe._layerTypes.set('renderables', 'Renderables');
-      Globe._layerTypes.set('compass', 'Compass');
-      Globe._layerTypes.set('coordinates', 'Coordinates');
-      Globe._layerTypes.set('view-controls', 'View Controls');
-      Globe._layerTypes.set('atmosphere-day-night', 'Atmosphere and Day/Night');
-      Globe._layerTypes.set('stars', 'Stars');
-      Globe._layerTypes.set('tessellation', 'Tessellation');
+      Globe._layerTypes.set("blue-marble", "Blue Marble");
+      Globe._layerTypes.set("blue-marble-lowres", "Background");
+      Globe._layerTypes.set("blue-marble-landsat", "Blue Marble and LandSat");
+      Globe._layerTypes.set("bing-aerial", "Bing Aerial");
+      Globe._layerTypes.set("bing-aerial-labels", "Bing Aerial with Labels");
+      Globe._layerTypes.set("bing-roads", "Bing Roads");
+      Globe._layerTypes.set("eox-sentinal2", "EOX Sentinal-2");
+      Globe._layerTypes.set(
+        "eox-sentinal2-labels",
+        "EOX Sentinal-2 with Labels"
+      );
+      Globe._layerTypes.set("eox-openstreetmap", "EOX OpenStreetMap");
+      Globe._layerTypes.set("usgs-topo", "USGS Topographic");
+      Globe._layerTypes.set("usgs-imagery-topo", "USGS Imagery Topographic");
+      Globe._layerTypes.set("renderables", "Renderables");
+      Globe._layerTypes.set("compass", "Compass");
+      Globe._layerTypes.set("coordinates", "Coordinates");
+      Globe._layerTypes.set("view-controls", "View Controls");
+      Globe._layerTypes.set("atmosphere-day-night", "Atmosphere and Day/Night");
+      Globe._layerTypes.set("stars", "Stars");
+      Globe._layerTypes.set("tessellation", "Tessellation");
     }
     return Globe._layerTypes;
   }
@@ -146,7 +148,7 @@ export default class Globe extends Component {
     "North UPS",
     "South UPS",
     "North Gnomonic",
-    "South Gnomonic"
+    "South Gnomonic",
   ];
 
   /**
@@ -160,7 +162,7 @@ export default class Globe extends Component {
   static isBaseUrlSet = false;
 
   /**
-   * Add a layer to the globe and applies options object properties to the 
+   * Add a layer to the globe and applies options object properties to the
    * the layer.
    * @param {WorldWind.Layer|String} layer A layer object or a Globe.layerTypes key or value
    * @param {Object|null} options E.g., {category: "base", enabled: true}
@@ -169,12 +171,14 @@ export default class Globe extends Component {
   addLayer(layer, options) {
     let wwLayer = null;
 
-    if (typeof layer === 'string') {
+    if (typeof layer === "string") {
       wwLayer = this.createLayer(layer);
     } else if (layer instanceof WorldWind.Layer) {
       wwLayer = layer;
     } else {
-      throw new Error("addLayer 'layer' argument must be a String or a WorldWind.Layer")
+      throw new Error(
+        "addLayer 'layer' argument must be a String or a WorldWind.Layer"
+      );
     }
 
     // Copy all properties defined on the 'options' object to the layer
@@ -187,24 +191,28 @@ export default class Globe extends Component {
       }
     }
 
-    // Assign a default category property for layer management 
-    if (typeof wwLayer.category === 'undefined') {
-      wwLayer.category = 'base'; // default category
+    // Assign a default category property for layer management
+    if (typeof wwLayer.category === "undefined") {
+      wwLayer.category = "base"; // default category
     }
     if (!Globe.categories.has(wwLayer.category)) {
       let found = false;
       for (let [key, value] of Globe.categories.entries()) {
-        if (found = value.includes(wwLayer.category)) {
+        if ((found = value.includes(wwLayer.category))) {
           wwLayer.category = key;
           break;
         }
       }
       if (!found) {
-        throw new Error("addLayer: 'category " + wwLayer.category + "' is not a valid Globe.categories key");
+        throw new Error(
+          "addLayer: 'category " +
+            wwLayer.category +
+            "' is not a valid Globe.categories key"
+        );
       }
     }
 
-    // Assign a unique layer ID for layer management 
+    // Assign a unique layer ID for layer management
     wwLayer.uniqueId = this.nextLayerId++;
 
     // Add the layer to the end of the layers within the category
@@ -226,10 +234,10 @@ export default class Globe extends Component {
   }
 
   /**
-   * Creates a layer based on a layerType key or value. Layer type keys must be 
-   * an exact match; partial strings may be used for layer type values. 
+   * Creates a layer based on a layerType key or value. Layer type keys must be
+   * an exact match; partial strings may be used for layer type values.
    * @param {String} layerType A Globe.layerTypes key or value
-   * @returns {WorldWind.Layer|null}  
+   * @returns {WorldWind.Layer|null}
    */
   createLayer(layerType) {
     let type = null;
@@ -251,58 +259,63 @@ export default class Globe extends Component {
     // Create the WorldWind.Layer object cooresponding to the layerType
     let layer = null;
     switch (type) {
-      case 'blue-marble':
+      case "blue-marble":
         layer = new WorldWind.BMNGLayer();
         break;
-      case 'blue-marble-lowres':
+      case "blue-marble-lowres":
         layer = new WorldWind.BMNGOneImageLayer();
-        layer.minActiveAltitude = 0;   // override the default value of 3e6;
+        layer.minActiveAltitude = 0; // override the default value of 3e6;
         break;
-      case 'blue-marble-landsat':
+      case "blue-marble-landsat":
         layer = new WorldWind.BMNGLandsatLayer();
         break;
-      case 'bing-aerial':
+      case "bing-aerial":
         layer = new WorldWind.BingAerialLayer();
         layer.detailControl = 1.25;
         break;
-      case 'bing-aerial-labels':
+      case "bing-aerial-labels":
         layer = new WorldWind.BingAerialWithLabelsLayer();
         layer.detailControl = 1.25;
         break;
-      case 'bing-roads':
+      case "bing-roads":
         layer = new WorldWind.BingRoadsLayer();
         layer.detailControl = 1.25;
         break;
-      case 'eox-sentinal2':
+      case "eox-sentinal2":
         layer = new EoxSentinal2CloudlessLayer();
         break;
-      case 'eox-sentinal2-labels':
+      case "eox-sentinal2-labels":
         layer = new EoxSentinal2WithLabelsLayer();
         break;
-      case 'eox-openstreetmap':
+      case "eox-openstreetmap":
         layer = new EoxOpenStreetMapLayer();
         break;
-      case 'usgs-topo':
+      case "usgs-topo":
         layer = new UsgsTopoBaseMapLayer();
         layer.detailControl = 1.75;
         break;
-      case 'usgs-imagery-topo':
+      case "usgs-imagery-topo":
         layer = new UsgsImageryTopoBaseMapLayer();
         layer.detailControl = 1.75;
         break;
-      case 'renderables':
+      case "renderables":
         layer = new WorldWind.RenderableLayer();
         break;
-      case 'compass':
+      case "compass":
         layer = new WorldWind.CompassLayer();
         break;
-      case 'coordinates':
+      case "coordinates":
         layer = new WorldWind.CoordinatesDisplayLayer(this.wwd);
         break;
-      case 'view-controls':
+      case "view-controls":
         layer = new WorldWind.ViewControlsLayer(this.wwd);
-        // Override the default placement to allow room for credits 
-        layer.placement = new WorldWind.Offset(WorldWind.OFFSET_PIXELS, 11, WorldWind.OFFSET_PIXELS, 11);
+        // Override the default placement to allow room for credits
+        layer.placement = new WorldWind.Offset(
+          WorldWind.OFFSET_PIXELS,
+          11,
+          WorldWind.OFFSET_PIXELS,
+          11
+        );
         layer.showPanControl = false;
         layer.showHeadingControl = true;
         layer.showTiltControl = true;
@@ -310,17 +323,21 @@ export default class Globe extends Component {
         layer.showExaggerationControl = true;
         layer.showFieldOfViewControl = false;
         break;
-      case 'atmosphere-day-night':
+      case "atmosphere-day-night":
         layer = new EnhancedAtmosphereLayer();
         break;
-      case 'stars':
+      case "stars":
         layer = new WorldWind.StarFieldLayer();
         break;
-      case 'tessellation':
+      case "tessellation":
         layer = new WorldWind.ShowTessellationLayer();
         break;
       default:
-        console.error("Globe.createLayer('" + layerType + "'): layer type does not match an entry in Globe.layerTypes");
+        console.error(
+          "Globe.createLayer('" +
+            layerType +
+            "'): layer type does not match an entry in Globe.layerTypes"
+        );
         return null;
     }
     layer.displayName = Globe.layerTypes.get(type);
@@ -334,10 +351,12 @@ export default class Globe extends Component {
    */
   getLayer(nameOrId) {
     let layers = null;
-    if (typeof nameOrId === 'string') {
-      layers = this.wwd.layers.filter(layer => layer.displayName === nameOrId);
+    if (typeof nameOrId === "string") {
+      layers = this.wwd.layers.filter(
+        (layer) => layer.displayName === nameOrId
+      );
     } else {
-      layers = this.wwd.layers.filter(layer => layer.uniqueId === nameOrId);
+      layers = this.wwd.layers.filter((layer) => layer.uniqueId === nameOrId);
     }
     return layers.length > 0 ? layers[0] : null;
   }
@@ -357,7 +376,7 @@ export default class Globe extends Component {
           }
         }
       }
-      return this.wwd.layers.filter(layer => layer.category === category);
+      return this.wwd.layers.filter((layer) => layer.category === category);
     } else {
       return this.wwd.layers;
     }
@@ -371,9 +390,9 @@ export default class Globe extends Component {
    */
   toggleLayer(layer) {
     // Apply rule: only [0..1] "base" layers can be enabled at a time
-    if (layer.category === 'base') {
+    if (layer.category === "base") {
       this.wwd.layers.forEach(function (item) {
-        if (item.category === 'base' && item !== layer) {
+        if (item.category === "base" && item !== layer) {
           item.enabled = false;
         }
       });
@@ -388,32 +407,32 @@ export default class Globe extends Component {
     this.publishUpdate(layer.category);
   }
 
-    /**
-     * Returns an observable containing the last update timestamp for the category.
-     * @param {String} category
-     * @returns {Observable} 
-     */
-    getCategoryTimestamp(category) {
-        if (!this.categoryTimestamps.has(category)) {
-            this.categoryTimestamps.set(category, observable.box(Date.now()));
-        }
-        return this.categoryTimestamps.get(category);
+  /**
+   * Returns an observable containing the last update timestamp for the category.
+   * @param {String} category
+   * @returns {Observable}
+   */
+  getCategoryTimestamp(category) {
+    if (!this.categoryTimestamps.has(category)) {
+      this.categoryTimestamps.set(category, observable.box(Date.now()));
     }
+    return this.categoryTimestamps.get(category);
+  }
 
   /**
    * Updates the timestamp for the given category.
    * @param {String} category
    */
   updateCategoryTimestamp(category) {
-        let timestamp = this.getCategoryTimestamp(category);
-        timestamp.set(Date.now());  // observable
+    let timestamp = this.getCategoryTimestamp(category);
+    timestamp.set(Date.now()); // observable
   }
 
   publishUpdate(category) {
     if (this.props.onUpdate) {
       // Lift-up the layer category state to the parent via a props function
       let key = category + "Layers";
-      let state = {layers: this.getLayers(category), lastUpdated: Date.now()};
+      let state = { layers: this.getLayers(category), lastUpdated: Date.now() };
       let data = {};
       data[key] = state;
       // Update the parent's state via the props function callback
@@ -434,25 +453,25 @@ export default class Globe extends Component {
    * Centers the globe on the given location and viewed from the given altitude (without animation).
    */
   lookAt(latitude, longitude, altitude) {
-    if (typeof latitude === 'number') {
+    if (typeof latitude === "number") {
       this.wwd.navigator.lookAtLocation.latitude = latitude;
     }
-    if (typeof longitude === 'number') {
+    if (typeof longitude === "number") {
       this.wwd.navigator.lookAtLocation.longitude = longitude;
     }
-    if (typeof altitude === 'number') {
+    if (typeof altitude === "number") {
       this.wwd.navigator.range = altitude;
     }
     this.wwd.redraw();
   }
 
   /**
-   * Arms the click-drop handler with the given callback. The callback will be invoked with the 
+   * Arms the click-drop handler with the given callback. The callback will be invoked with the
    * terrain position where the globe is next clicked or tapped.
    */
   armClickDrop(dropCallback) {
     this.dropCallback = dropCallback;
-    this.setState({isDropArmed: true});
+    this.setState({ isDropArmed: true });
   }
 
   /**
@@ -465,13 +484,15 @@ export default class Globe extends Component {
       return;
     }
     // Get the clicked window coords
-    let type = event.type, x, y;
+    let type = event.type,
+      x,
+      y;
     switch (type) {
-      case 'click':
+      case "click":
         x = event.clientX;
         y = event.clientY;
         break;
-      case 'touchend':
+      case "touchend":
         if (!event.changedTouches[0]) {
           return;
         }
@@ -481,7 +502,7 @@ export default class Globe extends Component {
       default:
     }
     if (this.dropCallback) {
-      // Get all the picked items 
+      // Get all the picked items
       const pickList = this.wwd.pickTerrain(this.wwd.canvasCoordinates(x, y));
       // Terrain should be one of the items if the globe was clicked
       const terrain = pickList.terrainObject();
@@ -489,7 +510,7 @@ export default class Globe extends Component {
         this.dropCallback(terrain.position);
       }
     }
-    this.setState({isDropArmed: false});
+    this.setState({ isDropArmed: false });
     event.stopImmediatePropagation();
   }
 
@@ -498,11 +519,16 @@ export default class Globe extends Component {
    * @param {String|Number} projection A projections[] string or index
    */
   changeProjection(projection) {
-    const proj = (typeof projection === 'number' ? Globe.projections[projection] : projection);
+    const proj =
+      typeof projection === "number"
+        ? Globe.projections[projection]
+        : projection;
 
     if (proj === "3D") {
       if (!this.roundGlobe) {
-        this.roundGlobe = new WorldWind.Globe(new WorldWind.EarthElevationModel());
+        this.roundGlobe = new WorldWind.Globe(
+          new WorldWind.EarthElevationModel()
+        );
       }
       // Replace the flat globe
       if (this.wwd.globe !== this.roundGlobe) {
@@ -518,9 +544,13 @@ export default class Globe extends Component {
       } else if (proj === "MERCATOR") {
         this.flatGlobe.projection = new WorldWind.ProjectionMercator();
       } else if (proj === "NORTH POLAR") {
-        this.flatGlobe.projection = new WorldWind.ProjectionPolarEquidistant("North");
+        this.flatGlobe.projection = new WorldWind.ProjectionPolarEquidistant(
+          "North"
+        );
       } else if (proj === "SOUTH POLAr") {
-        this.flatGlobe.projection = new WorldWind.ProjectionPolarEquidistant("South");
+        this.flatGlobe.projection = new WorldWind.ProjectionPolarEquidistant(
+          "South"
+        );
       } else if (proj === "NORTH UPS") {
         this.flatGlobe.projection = new WorldWind.ProjectionUPS("North");
       } else if (proj === "SOUTH UPS") {
@@ -541,9 +571,11 @@ export default class Globe extends Component {
    * Applies applicable property changes to the globe.
    */
   shouldComponentUpdate(nextProps, nextState) {
-    if (nextProps.latitude !== this.props.latitude ||
+    if (
+      nextProps.latitude !== this.props.latitude ||
       nextProps.longitude !== this.props.longitude ||
-      nextProps.altitude !== this.props.altitude) {
+      nextProps.altitude !== this.props.altitude
+    ) {
       this.goTo(nextProps.latitude, nextProps.longitude, nextProps.altitude);
     }
     // TODO: handle changes in the layers
@@ -568,21 +600,20 @@ export default class Globe extends Component {
     }
 
     // Added click/pick handler support
-    this.wwd.addEventListener('click', (e) => this.handleGlobeClick(e));
-    this.wwd.addEventListener('touchend', (e) => this.handleGlobeClick(e));
+    this.wwd.addEventListener("click", (e) => this.handleGlobeClick(e));
+    this.wwd.addEventListener("touchend", (e) => this.handleGlobeClick(e));
 
     // Add a low-res background layer that's always available
-    this.addLayer('blue-marble-lowres', {category: "background"});  // this should be a setting
+    this.addLayer("blue-marble-lowres", { category: "background" }); // this should be a setting
 
     // Add any supplied layer configurations to the globe
     if (this.props.layers) {
-      this.props.layers.forEach(config =>
-      {
+      this.props.layers.forEach((config) => {
         switch (typeof config) {
-          case 'string':
+          case "string":
             this.addLayer(config);
             break;
-          case 'object':
+          case "object":
             if (config instanceof WorldWind.Layer) {
               this.addLayer(config);
             } else {
@@ -593,18 +624,23 @@ export default class Globe extends Component {
       });
     }
 
-    // Change the startup position if given 
+    // Change the startup position if given
     if (this.props.latitude && this.props.longitude) {
-      this.lookAt(this.props.latitude, this.props.longitude, this.props.altitude)
+      this.lookAt(
+        this.props.latitude,
+        this.props.longitude,
+        this.props.altitude
+      );
     }
 
     // Update state
-    this.setState({isValid: true});
+    this.setState({ isValid: true });
   }
 
   render() {
-    let cursor = (this.state.isDropArmed ? 'crosshair' : 'default');
-    let backgroundColor = (this.props.backgroundColor || DEFAULT_BACKGROUND_COLOR); // this should use a defaultProps
+    let cursor = this.state.isDropArmed ? "crosshair" : "default";
+    let backgroundColor =
+      this.props.backgroundColor || DEFAULT_BACKGROUND_COLOR; // this should use a defaultProps
 
     // Apply changes to an existing canvas
     if (this.props.canvasId) {
@@ -619,17 +655,16 @@ export default class Globe extends Component {
 
     // Otherwise create a canvas for the WorldWindow
     let style = {
-      width: '100%',
-      height: '100%',
+      width: "100%",
+      height: "100%",
       cursor: cursor,
-      backgroundColor: backgroundColor
+      backgroundColor: backgroundColor,
     };
 
-    return(
+    return (
       <canvas id={this.canvasId} style={style}>
-          Your browser does not support HTML5 Canvas.
+        Your browser does not support HTML5 Canvas.
       </canvas>
-      );
+    );
   }
-};
-
+}
